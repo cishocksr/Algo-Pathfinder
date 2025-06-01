@@ -17,7 +17,7 @@ export default function AlgorithmModal({
 }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent asChild>
+      <DialogContent>
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -34,8 +34,8 @@ export default function AlgorithmModal({
               neighbors at the current depth before going deeper.
             </p>
             <p>
-              <strong>DFS (Depth-First Search):</strong> Goes as far as possible
-              along each branch before backtracking.
+              <strong>DFS (Depth-First Search):</strong> Explores as far as
+              possible along one branch before backtracking.
             </p>
           </div>
         </motion.div>

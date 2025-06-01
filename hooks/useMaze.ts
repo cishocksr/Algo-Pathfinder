@@ -2,16 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type { MazeGridType } from "@/lib/types";
-import { bfs } from "@/lib/algorithms/bfs";
-import { dfs } from "@/lib/algorithms/dfs";
 
 export function useMaze(width = 20, height = 20) {
   const [maze, setMaze] = useState<MazeGridType>([]);
   const [timeoutIds, setTimeoutIds] = useState<number[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); // 👈 New state
-
-  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     generateMaze(width, height);
@@ -31,7 +26,6 @@ export function useMaze(width = 20, height = 20) {
     );
     setMaze(newMaze);
     clearAllTimeouts();
-    setIsRunning(false);
   };
 
   const resetMaze = () => {
@@ -41,7 +35,6 @@ export function useMaze(width = 20, height = 20) {
       )
     );
     clearAllTimeouts();
-    setIsRunning(false);
   };
 
   const clearAllTimeouts = () => {
@@ -49,67 +42,59 @@ export function useMaze(width = 20, height = 20) {
     setTimeoutIds([]);
   };
 
-  const animatePath = (steps: [number, number][][]) => {
-  clearAllTimeouts();
-  setIsRunning(true);
-  setIsPaused(false);
-
-  const finalPath = steps[steps.length - 1];
-
-  steps.forEach((step, i) => {
-    const [x, y] = step[step.length - 1];
-    const id = window.setTimeout(() => {
-      if (isPaused) return; // 👈 Don't animate if paused
-
-      setMaze((prev) =>
-        prev.map((row, rowIndex) =>
-          row.map((cell, cellIndex) => {
-            if (rowIndex === y && cellIndex === x) {
-              return cell === "start" || cell === "end" ? cell : "visited";
-            }
-            return cell;
-          })
-        )
-      );
-
-
-        if (i === steps.length - 1) {
-        finalPath.forEach(([fx, fy], j) => {
-          const highlightId = window.setTimeout(() => {
-            setMaze((prev) =>
-              prev.map((row, rowIndex) =>
-                row.map((cell, cellIndex) => {
-                  if (rowIndex === fy && cellIndex === fx) {
-                    return cell === "start" || cell === "end" ? cell : "final-path";
-                  }
-                  return cell;
-                })
-              )
-            );
-          }, j * 30); // highlight path slightly faster
-          setTimeoutIds((prev) => [...prev, highlightId]);
-        });
-
-        setIsRunning(false);
-      }
-    }, i * 100); // slowed down to 100ms per step
-    setTimeoutIds((prev) => [...prev, id]);
-  });
-};
-
   const traverse = (method: "bfs" | "dfs") => {
-    const start: [number, number] = [0, 0];
-    const end: [number, number] = [width - 1, height - 1];
+    const structure: [number, number][] = [[0, 0]];
+    const visited = new Set(["0,0"]);
 
-    const steps =
-      method === "bfs" ? bfs(maze, start, end) : dfs(maze, start, end);
+    const step = () => {
+      if (structure.length === 0) return;
+      const [x, y] =
+        method === "bfs" ? structure.shift()! : structure.pop()!;
+      const directions = [
+        [0, 1],
+        [1, 0],
+        [0, -1],
+        [-1, 0],
+      ];
 
-    if (steps.length === 0) {
-      console.warn("No path found");
-      return;
-    }
+      const visitCell = ([x, y]: [number, number]) => {
+        setMaze((prev) =>
+          prev.map((row, rowIndex) =>
+            row.map((cell, cellIndex) => {
+              if (rowIndex === y && cellIndex === x) {
+                return cell === "start" || cell === "end" ? cell : "visited";
+              }
+              return cell;
+            })
+          )
+        );
+        return maze[y][x] === "end";
+      };
 
-    animatePath(steps);
+      for (const [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        const key = `${nx},${ny}`;
+        if (
+          nx >= 0 &&
+          nx < width &&
+          ny >= 0 &&
+          ny < height &&
+          !visited.has(key)
+        ) {
+          visited.add(key);
+          if (maze[ny][nx] === "path" || maze[ny][nx] === "end") {
+            if (visitCell([nx, ny])) return;
+            structure.push([nx, ny]);
+          }
+        }
+      }
+
+      const id = window.setTimeout(step, 50);
+      setTimeoutIds((prev) => [...prev, id]);
+    };
+
+    step();
   };
 
   return {
@@ -119,6 +104,5 @@ export function useMaze(width = 20, height = 20) {
     traverse,
     showModal,
     setShowModal,
-    isRunning,
   };
 }
