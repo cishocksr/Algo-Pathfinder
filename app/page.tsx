@@ -2,8 +2,8 @@ import MazeView from "@/components/maze-view";
 
 export default function HomePage() {
   return (
-    <main className="p-6 min-h-screen bg-background">
+    <section className="min-h-screen py-12">
       <MazeView />
-    </main>
+    </section>
   );
 }

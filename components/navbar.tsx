@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 export default function Navbar() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
   return (
     <motion.nav
       className="w-full px-6 py-4 shadow-sm bg-card border-b border-border"
@@ -15,7 +23,7 @@ export default function Navbar() {
         <Link href="/" className="text-lg font-bold">
           Maze Visualizer
         </Link>
-        <div className="space-x-4 text-sm font-medium">
+        <div className="flex items-center gap-4 text-sm font-medium">
           <Link href="/about" className="hover:underline">
             About
           </Link>
@@ -27,6 +35,15 @@ export default function Navbar() {
           >
             GitHub
           </a>
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Toggle dark mode"
+              className="transition-colors hover:text-primary"
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          )}
         </div>
       </div>
     </motion.nav>
