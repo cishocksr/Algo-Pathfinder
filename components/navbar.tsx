@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
   return (
     <motion.nav
       className="w-full px-6 py-4 shadow-sm bg-card border-b border-border"
@@ -13,20 +22,29 @@ export default function Navbar() {
     >
       <div className="flex justify-between items-center max-w-6xl mx-auto">
         <Link href="/" className="text-lg font-bold">
-          Maze Visualizer
+          Pathfinder
         </Link>
-        <div className="space-x-4 text-sm font-medium">
-          <Link href="/about" className="hover:underline">
-            About
-          </Link>
-          <a
-            href="https://github.com/your-username/maze-visualizer"
+        <div className="flex items-center gap-4 text-sm font-medium">
+          <motion.a
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            href="https://github.com/cishocksr/Algo-Pathfinder/tree/main"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:underline"
           >
-            GitHub
-          </a>
+            <Button variant="outline">GitHub</Button>
+          </motion.a>
+
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {mounted &&
+                (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
+            </Button>
+          </motion.div>
         </div>
       </div>
     </motion.nav>

@@ -1,16 +1,16 @@
 import type { MazeGridType } from "../types";
 
 
-export function bfs(
+export function dfs(
   maze: MazeGridType,
   start: [number, number],
   end: [number, number]
 ): [number, number][][] {
-  const queue: [number, number][][] = [[[...start]]];
+  const stack: [number, number][][] = [[[...start]]];
   const visited = new Set<string>([`${start[0]},${start[1]}`]);
 
-  while (queue.length > 0) {
-    const path = queue.shift()!;
+  while (stack.length > 0) {
+    const path = stack.pop()!;
     const [x, y] = path[path.length - 1];
 
     if (x === end[0] && y === end[1]) {
@@ -38,10 +38,11 @@ export function bfs(
         (maze[ny][nx] === "path" || maze[ny][nx] === "end")
       ) {
         visited.add(key);
-        queue.push([...path, [nx, ny]]);
+        stack.push([...path, [nx, ny]]);
       }
     }
   }
 
   return []; 
 }
+
