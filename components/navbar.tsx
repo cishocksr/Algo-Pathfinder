@@ -28,7 +28,7 @@ export default function Navbar() {
           <motion.a
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            href="https://github.com/your-user"
+            href="https://github.com/cishocksr/Algo-Pathfinder/tree/main"
             target="_blank"
             rel="noopener noreferrer"
           >

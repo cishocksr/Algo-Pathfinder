@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MazeGridType } from "@/lib/types";
+import { bfs } from "@/lib/algorithms/bfs";
+import { dfs } from "@/lib/algorithms/dfs";
 
 export function useMaze(width = 20, height = 20) {
   const [maze, setMaze] = useState<MazeGridType>([]);
-  const [timeoutIds, setTimeoutIds] = useState<number[]>([]);
+  const [timeoutIds, setTimeoutIds] = useState<ReturnType<typeof setTimeout>[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const traversalRef = useRef<[number, number][]>([]);
+  const indexRef = useRef(0);
 
   useEffect(() => {
     generateMaze(width, height);
@@ -26,6 +33,10 @@ export function useMaze(width = 20, height = 20) {
     );
     setMaze(newMaze);
     clearAllTimeouts();
+    setIsRunning(false);
+    setIsPaused(false);
+    traversalRef.current = [];
+    indexRef.current = 0;
   };
 
   const resetMaze = () => {
@@ -35,6 +46,10 @@ export function useMaze(width = 20, height = 20) {
       )
     );
     clearAllTimeouts();
+    setIsRunning(false);
+    setIsPaused(false);
+    traversalRef.current = [];
+    indexRef.current = 0;
   };
 
   const clearAllTimeouts = () => {
@@ -43,59 +58,57 @@ export function useMaze(width = 20, height = 20) {
   };
 
   const traverse = (method: "bfs" | "dfs") => {
-    const structure: [number, number][] = [[0, 0]];
-    const visited = new Set(["0,0"]);
+    const algorithm = method === "bfs" ? bfs : dfs;
+    const start: [number, number] = [0, 0];
+    const end: [number, number] = [maze.length - 1, maze[0].length - 1];
+    const fullPaths = algorithm(maze, start, end);
 
-    const step = () => {
-      if (structure.length === 0) return;
-      const [x, y] =
-        method === "bfs" ? structure.shift()! : structure.pop()!;
-      const directions = [
-        [0, 1],
-        [1, 0],
-        [0, -1],
-        [-1, 0],
-      ];
+    traversalRef.current = fullPaths.map(p => p[p.length - 1]);
+    indexRef.current = 0;
 
-      const visitCell = ([x, y]: [number, number]) => {
+    setIsRunning(true);
+    setIsPaused(false);
+    stepThroughTraversal();
+  };
+
+  const stepThroughTraversal = () => {
+    const steps = traversalRef.current;
+    let ids: ReturnType<typeof setTimeout>[] = [];
+
+    for (let i = indexRef.current; i < steps.length; i++) {
+      const [x, y] = steps[i];
+
+      const id = setTimeout(() => {
+        if (isPaused) return;
         setMaze((prev) =>
           prev.map((row, rowIndex) =>
-            row.map((cell, cellIndex) => {
-              if (rowIndex === y && cellIndex === x) {
-                return cell === "start" || cell === "end" ? cell : "visited";
-              }
-              return cell;
-            })
+            row.map((cell, cellIndex) =>
+              rowIndex === y && cellIndex === x && cell !== "start" && cell !== "end"
+                ? "visited"
+                : cell
+            )
           )
         );
-        return maze[y][x] === "end";
-      };
+        indexRef.current = i + 1;
 
-      for (const [dx, dy] of directions) {
-        const nx = x + dx;
-        const ny = y + dy;
-        const key = `${nx},${ny}`;
-        if (
-          nx >= 0 &&
-          nx < width &&
-          ny >= 0 &&
-          ny < height &&
-          !visited.has(key)
-        ) {
-          visited.add(key);
-          if (maze[ny][nx] === "path" || maze[ny][nx] === "end") {
-            if (visitCell([nx, ny])) return;
-            structure.push([nx, ny]);
-          }
+        if (i === steps.length - 1) {
+          setIsRunning(false);
         }
-      }
+      }, (i - indexRef.current) * 50);
 
-      const id = window.setTimeout(step, 50);
-      setTimeoutIds((prev) => [...prev, id]);
-    };
+      ids.push(id);
+    }
 
-    step();
+    setTimeoutIds(ids);
   };
+
+  useEffect(() => {
+    if (!isPaused && isRunning) {
+      stepThroughTraversal();
+    } else {
+      clearAllTimeouts();
+    }
+  }, [isPaused]);
 
   return {
     maze,
@@ -104,5 +117,8 @@ export function useMaze(width = 20, height = 20) {
     traverse,
     showModal,
     setShowModal,
+    isRunning,
+    isPaused,
+    setIsPaused,
   };
 }
