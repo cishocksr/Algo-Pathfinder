@@ -1,9 +1,6 @@
 import type { MazeGridType } from "../types";
 
-/**
- * Depth-First Search
- * Returns an array of step-by-step paths to visualize DFS progress
- */
+
 export function dfs(
   maze: MazeGridType,
   start: [number, number],
@@ -46,6 +43,6 @@ export function dfs(
     }
   }
 
-  return []; // No path found
+  return []; 
 }
 

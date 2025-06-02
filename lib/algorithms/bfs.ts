@@ -1,9 +1,6 @@
 import type { MazeGridType } from "../types";
 
-/**
- * Breadth-First Search
- * Returns an array of step-by-step paths to visualize BFS progress
- */
+
 export function bfs(
   maze: MazeGridType,
   start: [number, number],
@@ -46,5 +43,5 @@ export function bfs(
     }
   }
 
-  return []; // No path found
+  return []; 
 }

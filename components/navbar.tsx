@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
-import { Button } from "@/components/ui/button"; // shadcn/ui Button
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -22,7 +22,7 @@ export default function Navbar() {
     >
       <div className="flex justify-between items-center max-w-6xl mx-auto">
         <Link href="/" className="text-lg font-bold">
-          Maze Visualizer
+          Pathfinder
         </Link>
         <div className="flex items-center gap-4 text-sm font-medium">
           <motion.a

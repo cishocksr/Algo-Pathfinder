@@ -30,9 +30,9 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Navbar /> {/* nav sits at top */}
+          <Navbar />
           <main className="flex-1 container mx-auto px-4">{children}</main>
-          <Footer /> {/* footer sticks to bottom if content is short */}
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
-import { Dispatch, SetStateAction } from "react";
 
 const MotionButton = motion(Button);
 
@@ -10,18 +15,14 @@ export default function ControlPanel({
   onReset,
   onNewMaze,
   onShowModal,
-  isRunning,
-  isPaused,
-  setIsPaused,
+  onResizeGrid,
 }: {
   onBfs: () => void;
   onDfs: () => void;
   onReset: () => void;
   onNewMaze: () => void;
   onShowModal: () => void;
-  isRunning: boolean;
-  isPaused: boolean;
-  setIsPaused: Dispatch<SetStateAction<boolean>>; // ✅ correct type
+  onResizeGrid: (cols: number, rows: number) => void;
 }) {
   const buttonVariants = {
     whileHover: { scale: 1.05 },
@@ -29,53 +30,40 @@ export default function ControlPanel({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <h2 className="text-lg font-semibold text-foreground">Maze Controls</h2>
-      <div className="flex flex-wrap justify-center gap-2">
-        <MotionButton
-          {...buttonVariants}
-          onClick={onBfs}
-          disabled={isRunning}
-          variant="default"
-        >
-          Start BFS
-        </MotionButton>
-        <MotionButton
-          {...buttonVariants}
-          onClick={onDfs}
-          disabled={isRunning}
-          variant="default"
-        >
-          Start DFS
-        </MotionButton>
-        <MotionButton
-          {...buttonVariants}
-          onClick={onReset}
-          disabled={isRunning}
-          variant="secondary"
-        >
-          Reset
-        </MotionButton>
-        <MotionButton
-          {...buttonVariants}
-          onClick={onNewMaze}
-          disabled={isRunning}
-          variant="outline"
-        >
-          New Maze
-        </MotionButton>
-        <MotionButton {...buttonVariants} onClick={onShowModal} variant="ghost">
-          About
-        </MotionButton>
-        <MotionButton
-          {...buttonVariants}
-          onClick={() => setIsPaused((prev) => !prev)}
-          disabled={!isRunning}
-          variant="secondary"
-        >
-          {isPaused ? "Resume" : "Pause"}
-        </MotionButton>
-      </div>
+    <div className="flex flex-wrap justify-center gap-2">
+      <MotionButton {...buttonVariants} onClick={onBfs} variant="ghost">
+        Start BFS
+      </MotionButton>
+      <MotionButton {...buttonVariants} onClick={onDfs} variant="ghost">
+        Start DFS
+      </MotionButton>
+      <MotionButton {...buttonVariants} onClick={onReset} variant="ghost">
+        Reset
+      </MotionButton>
+      <MotionButton {...buttonVariants} onClick={onNewMaze} variant="ghost">
+        New Maze
+      </MotionButton>
+      <MotionButton {...buttonVariants} onClick={onShowModal} variant="ghost">
+        About
+      </MotionButton>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <MotionButton {...buttonVariants} variant="ghost">
+            Grid Size
+          </MotionButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => onResizeGrid(10, 10)}>
+            10 × 10
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onResizeGrid(20, 20)}>
+            20 × 20
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onResizeGrid(30, 30)}>
+            30 × 30
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
