@@ -1,4 +1,3 @@
-// hooks/useMaze.ts - IMPROVED VERSION
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -69,8 +68,8 @@ export function useMaze(width = 20, height = 20) {
         currentStepRef.current = 0;
         setIsRunning(false);
         setIsPaused(false);
-        setCurrentAlgorithm(null);
-        setStats(null);
+        setCurrentAlgorithm(null); // Clear algorithm on reset
+        setStats(null); // Clear stats on reset
     }, []);
 
     // Reset only visited cells, keep walls
@@ -147,7 +146,9 @@ export function useMaze(width = 20, height = 20) {
                 timeElapsed: Math.round(endTime - startTimeRef.current),
             });
             setIsRunning(false);
-            setCurrentAlgorithm(null);
+            // 🔧 FIX: Don't clear currentAlgorithm here!
+            // Keep it so StatsDisplay can show which algorithm was used
+            // It will be cleared when user runs a new algorithm or resets
         }
     }, [animationSpeed, isPaused]);
 

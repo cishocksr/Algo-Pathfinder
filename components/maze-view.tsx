@@ -1,8 +1,9 @@
 "use client";
 
-import MazeGrid from "@/components/maz-grid";
+import MazeGrid from "@/components/maze-grid";
 import ControlPanel from "@/components/control-panel";
 import AlgorithmModal from "@/components/modal";
+import { StatsDisplay } from "@/components/ui/stats-display";
 import { useMaze } from "@/hooks/useMaze";
 import { useState } from "react";
 
@@ -20,6 +21,8 @@ export default function MazeView() {
         stopAnimation,
         animationSpeed,
         setAnimationSpeed,
+        currentAlgorithm,
+        stats,
     } = useMaze();
 
     const [gridSize, setGridSize] = useState({ cols: 20, rows: 20 });
@@ -45,7 +48,12 @@ export default function MazeView() {
                 animationSpeed={animationSpeed}
                 onSpeedChange={setAnimationSpeed}
             />
+
+            {/* Stats Display - Shows after algorithm completes */}
+            <StatsDisplay stats={stats} algorithm={currentAlgorithm} />
+
             <MazeGrid maze={maze} columns={gridSize.cols} />
+
             <AlgorithmModal open={showModal} onClose={() => setShowModal(false)} />
         </div>
     );
