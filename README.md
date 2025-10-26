@@ -17,4 +17,4 @@ pathfinder-demo/
 │   ├── types.ts            # TypeScript types
 │   └── utils.ts            # Utility functions
 └── hooks/
-└── useMaze.ts          # Maze state management
+└── use-maze.ts          # Maze state management

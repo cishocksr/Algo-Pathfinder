@@ -1,4 +1,4 @@
-// hooks/useMaze.ts - WITH A* INTEGRATION
+// hooks/use-maze.ts - WITH A* INTEGRATION
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";

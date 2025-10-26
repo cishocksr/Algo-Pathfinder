@@ -68,7 +68,7 @@ export default function AlgorithmModal({
                                 A* (A-Star)
                             </h3>
                             <p className="text-muted-foreground">
-                                Uses a heuristic function to guide the search toward the goal, combining the benefits of Dijkstra's algorithm and greedy best-first search.
+                                Uses a heuristic function to guide the search toward the goal, combining the benefits of Dijkstra&apos;s algorithm and greedy best-first search.
                             </p>
                             <div className="bg-muted/50 p-3 rounded-md space-y-1">
                                 <p><strong>Guarantees:</strong> ✅ Shortest path (with admissible heuristic)</p>
@@ -86,7 +86,7 @@ export default function AlgorithmModal({
                             </h3>
                             <ul className="space-y-2 list-disc list-inside text-muted-foreground">
                                 <li><strong>BFS:</strong> When you need the shortest path and all edges have equal weight</li>
-                                <li><strong>DFS:</strong> When you need to explore all possible paths or don't care about optimality</li>
+                                <li><strong>DFS:</strong> When you need to explore all possible paths or don&apos;t care about optimality</li>
                                 <li><strong>A*:</strong> When you need the optimal path and want better performance than BFS</li>
                             </ul>
                         </div>
