@@ -7,28 +7,46 @@ import { useMaze } from "@/hooks/useMaze";
 import { useState } from "react";
 
 export default function MazeView() {
-  const { maze, generateMaze, resetMaze, traverse, showModal, setShowModal } =
-    useMaze();
+    const {
+        maze,
+        generateMaze,
+        resetMaze,
+        traverse,
+        showModal,
+        setShowModal,
+        isRunning,
+        isPaused,
+        togglePause,
+        stopAnimation,
+        animationSpeed,
+        setAnimationSpeed,
+    } = useMaze();
 
-  const [gridSize, setGridSize] = useState({ cols: 20, rows: 20 });
+    const [gridSize, setGridSize] = useState({ cols: 20, rows: 20 });
 
-  const handleResizeGrid = (cols: number, rows: number) => {
-    setGridSize({ cols, rows });
-    generateMaze(cols, rows);
-  };
+    const handleResizeGrid = (cols: number, rows: number) => {
+        setGridSize({ cols, rows });
+        generateMaze(cols, rows);
+    };
 
-  return (
-    <div className="flex flex-col items-center gap-6">
-      <ControlPanel
-        onBfs={() => traverse("bfs")}
-        onDfs={() => traverse("dfs")}
-        onReset={resetMaze}
-        onNewMaze={() => generateMaze(gridSize.cols, gridSize.rows)}
-        onShowModal={() => setShowModal(true)}
-        onResizeGrid={handleResizeGrid}
-      />
-      <MazeGrid maze={maze} columns={gridSize.cols} />
-      <AlgorithmModal open={showModal} onClose={() => setShowModal(false)} />
-    </div>
-  );
+    return (
+        <div className="flex flex-col items-center gap-6">
+            <ControlPanel
+                onBfs={() => traverse("bfs")}
+                onDfs={() => traverse("dfs")}
+                onReset={resetMaze}
+                onNewMaze={() => generateMaze(gridSize.cols, gridSize.rows)}
+                onShowModal={() => setShowModal(true)}
+                onResizeGrid={handleResizeGrid}
+                onTogglePause={togglePause}
+                onStop={stopAnimation}
+                isRunning={isRunning}
+                isPaused={isPaused}
+                animationSpeed={animationSpeed}
+                onSpeedChange={setAnimationSpeed}
+            />
+            <MazeGrid maze={maze} columns={gridSize.cols} />
+            <AlgorithmModal open={showModal} onClose={() => setShowModal(false)} />
+        </div>
+    );
 }

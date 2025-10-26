@@ -1,124 +1,237 @@
+// hooks/useMaze.ts - IMPROVED VERSION
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { MazeGridType } from "@/lib/types";
 import { bfs } from "@/lib/algorithms/bfs";
 import { dfs } from "@/lib/algorithms/dfs";
 
+// Constants instead of magic numbers
+const WALL_PROBABILITY = 0.2;
+const DEFAULT_ANIMATION_SPEED = 50; // ms per step
+
+type AlgorithmType = "bfs" | "dfs";
+
+interface AlgorithmResult {
+    visited: [number, number][];
+    path: [number, number][];
+}
+
+interface AlgorithmStats {
+    nodesVisited: number;
+    pathLength: number;
+    timeElapsed: number;
+}
+
 export function useMaze(width = 20, height = 20) {
-  const [maze, setMaze] = useState<MazeGridType>([]);
-  const [timeoutIds, setTimeoutIds] = useState<ReturnType<typeof setTimeout>[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+    const [maze, setMaze] = useState<MazeGridType>([]);
+    const [showModal, setShowModal] = useState(false);
+    const [isRunning, setIsRunning] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [animationSpeed, setAnimationSpeed] = useState(DEFAULT_ANIMATION_SPEED);
+    const [currentAlgorithm, setCurrentAlgorithm] = useState<AlgorithmType | null>(null);
+    const [stats, setStats] = useState<AlgorithmStats | null>(null);
 
-  const traversalRef = useRef<[number, number][]>([]);
-  const indexRef = useRef(0);
+    // Use refs for animation control
+    const visitedNodesRef = useRef<[number, number][]>([]);
+    const finalPathRef = useRef<[number, number][]>([]);
+    const currentStepRef = useRef(0);
+    const animationIdRef = useRef<number | null>(null);
+    const startTimeRef = useRef<number>(0);
 
-  useEffect(() => {
-    generateMaze(width, height);
-  }, []);
-
-  const generateMaze = (w: number, h: number) => {
-    const newMaze = Array.from({ length: h }, (_, y) =>
-      Array.from({ length: w }, (_, x) =>
-        x === 0 && y === 0
-          ? "start"
-          : x === w - 1 && y === h - 1
-          ? "end"
-          : Math.random() > 0.2
-          ? "path"
-          : "wall"
-      )
-    );
-    setMaze(newMaze);
-    clearAllTimeouts();
-    setIsRunning(false);
-    setIsPaused(false);
-    traversalRef.current = [];
-    indexRef.current = 0;
-  };
-
-  const resetMaze = () => {
-    setMaze((prevMaze) =>
-      prevMaze.map((row) =>
-        row.map((cell) => (cell === "visited" ? "path" : cell))
-      )
-    );
-    clearAllTimeouts();
-    setIsRunning(false);
-    setIsPaused(false);
-    traversalRef.current = [];
-    indexRef.current = 0;
-  };
-
-  const clearAllTimeouts = () => {
-    timeoutIds.forEach(clearTimeout);
-    setTimeoutIds([]);
-  };
-
-  const traverse = (method: "bfs" | "dfs") => {
-    const algorithm = method === "bfs" ? bfs : dfs;
-    const start: [number, number] = [0, 0];
-    const end: [number, number] = [maze.length - 1, maze[0].length - 1];
-    const fullPaths = algorithm(maze, start, end);
-
-    traversalRef.current = fullPaths.map(p => p[p.length - 1]);
-    indexRef.current = 0;
-
-    setIsRunning(true);
-    setIsPaused(false);
-    stepThroughTraversal();
-  };
-
-  const stepThroughTraversal = () => {
-    const steps = traversalRef.current;
-    let ids: ReturnType<typeof setTimeout>[] = [];
-
-    for (let i = indexRef.current; i < steps.length; i++) {
-      const [x, y] = steps[i];
-
-      const id = setTimeout(() => {
-        if (isPaused) return;
-        setMaze((prev) =>
-          prev.map((row, rowIndex) =>
-            row.map((cell, cellIndex) =>
-              rowIndex === y && cellIndex === x && cell !== "start" && cell !== "end"
-                ? "visited"
-                : cell
-            )
-          )
+    // Generate maze with proper typing and constants
+    const generateMaze = useCallback((w: number, h: number) => {
+        const newMaze: MazeGridType = Array.from({ length: h }, (_, rowIdx) =>
+            Array.from({ length: w }, (_, colIdx) => {
+                if (rowIdx === 0 && colIdx === 0) return "start";
+                if (rowIdx === h - 1 && colIdx === w - 1) return "end";
+                return Math.random() > WALL_PROBABILITY ? "path" : "wall";
+            })
         );
-        indexRef.current = i + 1;
 
-        if (i === steps.length - 1) {
-          setIsRunning(false);
+        setMaze(newMaze);
+        resetAnimation();
+    }, []);
+
+    // Initialize maze on mount
+    useEffect(() => {
+        generateMaze(width, height);
+    }, [width, height, generateMaze]);
+
+    // Clean animation state
+    const resetAnimation = useCallback(() => {
+        if (animationIdRef.current !== null) {
+            clearTimeout(animationIdRef.current);
+            animationIdRef.current = null;
         }
-      }, (i - indexRef.current) * 50);
+        visitedNodesRef.current = [];
+        finalPathRef.current = [];
+        currentStepRef.current = 0;
+        setIsRunning(false);
+        setIsPaused(false);
+        setCurrentAlgorithm(null);
+        setStats(null);
+    }, []);
 
-      ids.push(id);
-    }
+    // Reset only visited cells, keep walls
+    const resetMaze = useCallback(() => {
+        setMaze((prevMaze) =>
+            prevMaze.map((row) =>
+                row.map((cell) =>
+                    cell === "visited" || cell === "final-path" ? "path" : cell
+                )
+            )
+        );
+        resetAnimation();
+    }, [resetAnimation]);
 
-    setTimeoutIds(ids);
-  };
+    // Animation step function
+    const animateStep = useCallback(() => {
+        const visitedNodes = visitedNodesRef.current;
+        const finalPath = finalPathRef.current;
+        const step = currentStepRef.current;
 
-  useEffect(() => {
-    if (!isPaused && isRunning) {
-      stepThroughTraversal();
-    } else {
-      clearAllTimeouts();
-    }
-  }, [isPaused]);
+        // Phase 1: Show visited nodes
+        if (step < visitedNodes.length) {
+            const [x, y] = visitedNodes[step];
 
-  return {
-    maze,
-    generateMaze,
-    resetMaze,
-    traverse,
-    showModal,
-    setShowModal,
-    isRunning,
-    isPaused,
-    setIsPaused,
-  };
+            setMaze((prev) =>
+                prev.map((row, rowIdx) =>
+                    row.map((cell, colIdx) =>
+                        rowIdx === y && colIdx === x && cell !== "start" && cell !== "end"
+                            ? "visited"
+                            : cell
+                    )
+                )
+            );
+
+            currentStepRef.current++;
+
+            if (!isPaused) {
+                animationIdRef.current = window.setTimeout(
+                    animateStep,
+                    animationSpeed
+                );
+            }
+        }
+        // Phase 2: Show final path
+        else if (step - visitedNodes.length < finalPath.length) {
+            const pathIndex = step - visitedNodes.length;
+            const [x, y] = finalPath[pathIndex];
+
+            setMaze((prev) =>
+                prev.map((row, rowIdx) =>
+                    row.map((cell, colIdx) =>
+                        rowIdx === y && colIdx === x && cell !== "start" && cell !== "end"
+                            ? "final-path"
+                            : cell
+                    )
+                )
+            );
+
+            currentStepRef.current++;
+
+            if (!isPaused) {
+                animationIdRef.current = window.setTimeout(
+                    animateStep,
+                    animationSpeed / 2 // Faster for final path
+                );
+            }
+        }
+        // Animation complete
+        else {
+            const endTime = performance.now();
+            setStats({
+                nodesVisited: visitedNodes.length,
+                pathLength: finalPath.length,
+                timeElapsed: Math.round(endTime - startTimeRef.current),
+            });
+            setIsRunning(false);
+            setCurrentAlgorithm(null);
+        }
+    }, [animationSpeed, isPaused]);
+
+    // Handle pause/resume
+    useEffect(() => {
+        if (isRunning && !isPaused && animationIdRef.current === null) {
+            animateStep();
+        } else if (isPaused && animationIdRef.current !== null) {
+            clearTimeout(animationIdRef.current);
+            animationIdRef.current = null;
+        }
+    }, [isPaused, isRunning, animateStep]);
+
+    // Run algorithm
+    const traverse = useCallback(
+        (method: AlgorithmType) => {
+            if (isRunning) return; // Prevent running multiple algorithms
+
+            resetMaze();
+
+            const algorithm = method === "bfs" ? bfs : dfs;
+            const start: [number, number] = [0, 0];
+            const end: [number, number] = [width - 1, height - 1];
+
+            startTimeRef.current = performance.now();
+
+            // Run algorithm (this should return {visited, path})
+            const result = algorithm(maze, start, end) as AlgorithmResult;
+
+            if (result.visited.length === 0) {
+                alert("No path found!");
+                return;
+            }
+
+            visitedNodesRef.current = result.visited;
+            finalPathRef.current = result.path;
+            currentStepRef.current = 0;
+
+            setCurrentAlgorithm(method);
+            setIsRunning(true);
+            setIsPaused(false);
+
+            // Start animation
+            animateStep();
+        },
+        [maze, width, height, isRunning, resetMaze, animateStep]
+    );
+
+    // Toggle pause
+    const togglePause = useCallback(() => {
+        if (isRunning) {
+            setIsPaused((prev) => !prev);
+        }
+    }, [isRunning]);
+
+    // Stop animation completely
+    const stopAnimation = useCallback(() => {
+        resetAnimation();
+        resetMaze();
+    }, [resetAnimation, resetMaze]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (animationIdRef.current !== null) {
+                clearTimeout(animationIdRef.current);
+            }
+        };
+    }, []);
+
+    return {
+        maze,
+        generateMaze,
+        resetMaze,
+        traverse,
+        showModal,
+        setShowModal,
+        isRunning,
+        isPaused,
+        togglePause,
+        stopAnimation,
+        animationSpeed,
+        setAnimationSpeed,
+        currentAlgorithm,
+        stats,
+    };
 }
