@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 
 const Slider = React.forwardRef<HTMLSpanElement, SliderProps>(
   ({ className, ...props }, ref) => {
-    const value = props.value || props.defaultValue || [props.min || 0, props.max || 100];
+    const value = props.value ||
+      props.defaultValue || [props.min || 0, props.max || 100];
 
     return (
       <SliderPrimitive.Root
