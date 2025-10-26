@@ -37,6 +37,7 @@ export default function MazeView() {
             <ControlPanel
                 onBfs={() => traverse("bfs")}
                 onDfs={() => traverse("dfs")}
+                onAstar={() => traverse("astar")}
                 onReset={resetMaze}
                 onNewMaze={() => generateMaze(gridSize.cols, gridSize.rows)}
                 onShowModal={() => setShowModal(true)}

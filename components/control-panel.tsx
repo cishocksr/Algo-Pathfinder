@@ -16,6 +16,7 @@ const MotionButton = motion(Button);
 interface ControlPanelProps {
     onBfs: () => void;
     onDfs: () => void;
+    onAstar: () => void;
     onReset: () => void;
     onNewMaze: () => void;
     onShowModal: () => void;
@@ -31,6 +32,7 @@ interface ControlPanelProps {
 export default function ControlPanel({
                                          onBfs,
                                          onDfs,
+                                         onAstar,
                                          onReset,
                                          onNewMaze,
                                          onShowModal,
@@ -77,6 +79,15 @@ export default function ControlPanel({
                 >
                     <Play size={16} />
                     Start DFS
+                </MotionButton>
+                <MotionButton
+                    {...buttonVariants}
+                    onClick={onAstar}
+                    variant="default"
+                    disabled={isRunning}
+                >
+                    <Play size={16} />
+                    Start A*
                 </MotionButton>
 
                 {/* Pause/Resume Button (only visible when running) */}

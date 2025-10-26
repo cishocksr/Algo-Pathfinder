@@ -1,15 +1,17 @@
+// hooks/useMaze.ts - WITH A* INTEGRATION
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MazeGridType } from "@/lib/types";
 import { bfs } from "@/lib/algorithms/bfs";
 import { dfs } from "@/lib/algorithms/dfs";
+import { astar } from "@/lib/algorithms/astar";
 
 // Constants instead of magic numbers
 const WALL_PROBABILITY = 0.2;
 const DEFAULT_ANIMATION_SPEED = 50; // ms per step
 
-type AlgorithmType = "bfs" | "dfs";
+type AlgorithmType = "bfs" | "dfs" | "astar";
 
 interface AlgorithmResult {
     visited: [number, number][];
@@ -68,8 +70,8 @@ export function useMaze(width = 20, height = 20) {
         currentStepRef.current = 0;
         setIsRunning(false);
         setIsPaused(false);
-        setCurrentAlgorithm(null); // Clear algorithm on reset
-        setStats(null); // Clear stats on reset
+        setCurrentAlgorithm(null);
+        setStats(null);
     }, []);
 
     // Reset only visited cells, keep walls
@@ -146,9 +148,7 @@ export function useMaze(width = 20, height = 20) {
                 timeElapsed: Math.round(endTime - startTimeRef.current),
             });
             setIsRunning(false);
-            // 🔧 FIX: Don't clear currentAlgorithm here!
-            // Keep it so StatsDisplay can show which algorithm was used
-            // It will be cleared when user runs a new algorithm or resets
+            // Keep currentAlgorithm so StatsDisplay can show results
         }
     }, [animationSpeed, isPaused]);
 
@@ -169,13 +169,18 @@ export function useMaze(width = 20, height = 20) {
 
             resetMaze();
 
-            const algorithm = method === "bfs" ? bfs : dfs;
+            // Select algorithm based on method
+            const algorithm =
+                method === "bfs" ? bfs :
+                    method === "dfs" ? dfs :
+                        astar;
+
             const start: [number, number] = [0, 0];
             const end: [number, number] = [width - 1, height - 1];
 
             startTimeRef.current = performance.now();
 
-            // Run algorithm (this should return {visited, path})
+            // Run algorithm
             const result = algorithm(maze, start, end) as AlgorithmResult;
 
             if (result.visited.length === 0) {
