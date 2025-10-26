@@ -186,7 +186,7 @@ export default function ControlPanel({
         </div>
         <Slider
           value={[animationSpeed]}
-          onValueChange={([value]) => onSpeedChange(value)}
+          onValueChange={(values) => onSpeedChange(values[0])}
           min={5}
           max={200}
           step={5}
