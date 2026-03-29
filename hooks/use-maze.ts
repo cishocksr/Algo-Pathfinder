@@ -36,25 +36,6 @@ export function useMaze(width = 20, height = 20) {
   const animationIdRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  // Generate maze with proper typing and constants
-  const generateMaze = useCallback((w: number, h: number) => {
-    const newMaze: MazeGridType = Array.from({ length: h }, (_, rowIdx) =>
-      Array.from({ length: w }, (_, colIdx) => {
-        if (rowIdx === 0 && colIdx === 0) return "start";
-        if (rowIdx === h - 1 && colIdx === w - 1) return "end";
-        return Math.random() > WALL_PROBABILITY ? "path" : "wall";
-      })
-    );
-
-    setMaze(newMaze);
-    resetAnimation();
-  }, []);
-
-  // Initialize maze on mount
-  useEffect(() => {
-    generateMaze(width, height);
-  }, [width, height, generateMaze]);
-
   // Clean animation state
   const resetAnimation = useCallback(() => {
     if (animationIdRef.current !== null) {
@@ -69,6 +50,28 @@ export function useMaze(width = 20, height = 20) {
     setCurrentAlgorithm(null);
     setStats(null);
   }, []);
+
+  // Generate maze with proper typing and constants
+  const generateMaze = useCallback(
+    (w: number, h: number) => {
+      const newMaze: MazeGridType = Array.from({ length: h }, (_, rowIdx) =>
+        Array.from({ length: w }, (_, colIdx) => {
+          if (rowIdx === 0 && colIdx === 0) return "start";
+          if (rowIdx === h - 1 && colIdx === w - 1) return "end";
+          return Math.random() > WALL_PROBABILITY ? "path" : "wall";
+        })
+      );
+
+      setMaze(newMaze);
+      resetAnimation();
+    },
+    [resetAnimation]
+  );
+
+  // Initialize maze on mount
+  useEffect(() => {
+    generateMaze(width, height);
+  }, [width, height, generateMaze]);
 
   // Reset only visited cells, keep walls
   const resetMaze = useCallback(() => {

@@ -13,7 +13,6 @@ export default function Navbar() {
 
   useEffect(() => {
     // Mount check for hydration - this is a common pattern for theme switching
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
