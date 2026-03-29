@@ -7,3 +7,8 @@ export type CellType =
   | "final-path";
 
 export type MazeGridType = CellType[][];
+
+export interface AlgorithmResult {
+  visited: [number, number][]; // Order nodes were explored
+  path: [number, number][]; // Path from start to end
+}

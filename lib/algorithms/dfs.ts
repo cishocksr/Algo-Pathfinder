@@ -1,9 +1,5 @@
-import type { MazeGridType } from "../types";
-
-interface AlgorithmResult {
-  visited: [number, number][];
-  path: [number, number][];
-}
+import type { MazeGridType, AlgorithmResult } from "../types";
+import { reconstructPath } from "./reconstruct-path";
 
 /**
  * Depth-First Search (DFS) Algorithm
@@ -24,14 +20,13 @@ export function dfs(
   start: [number, number],
   end: [number, number]
 ): AlgorithmResult {
-  // Stack stores: current position and path to reach it
-  const stack: Array<{
-    pos: [number, number];
-    path: [number, number][];
-  }> = [{ pos: start, path: [start] }];
-
+  const stack: [number, number][] = [start];
   const visited = new Set<string>([`${start[0]},${start[1]}`]);
   const visitedOrder: [number, number][] = [start];
+
+  // Parent map for O(V) path reconstruction instead of O(V²) path copies
+  const parentMap = new Map<string, [number, number] | null>();
+  parentMap.set(`${start[0]},${start[1]}`, null);
 
   // Direction vectors: right, down, left, up
   const directions: [number, number][] = [
@@ -42,14 +37,13 @@ export function dfs(
   ];
 
   while (stack.length > 0) {
-    const { pos, path } = stack.pop()!; // LIFO - Last In First Out
-    const [x, y] = pos;
+    const [x, y] = stack.pop()!; // LIFO - Last In First Out
 
     // Found the target!
     if (x === end[0] && y === end[1]) {
       return {
         visited: visitedOrder,
-        path: path,
+        path: reconstructPath(parentMap, end),
       };
     }
 
@@ -71,10 +65,8 @@ export function dfs(
       ) {
         visited.add(key);
         visitedOrder.push([newX, newY]);
-        stack.push({
-          pos: [newX, newY],
-          path: [...path, [newX, newY]],
-        });
+        parentMap.set(key, [x, y]);
+        stack.push([newX, newY]);
       }
     }
   }

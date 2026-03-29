@@ -1,16 +1,73 @@
-import type { MazeGridType } from "../types";
+import type { MazeGridType, AlgorithmResult } from "../types";
+import { reconstructPath } from "./reconstruct-path";
 
-interface AlgorithmResult {
-  visited: [number, number][];
-  path: [number, number][];
+interface AStarNode {
+  pos: [number, number];
+  g: number; // Cost from start to current node
+  f: number; // Total cost (g + h)
 }
 
-interface Node {
-  pos: [number, number];
-  path: [number, number][];
-  g: number; // Cost from start to current node
-  h: number; // Heuristic (estimated cost to end)
-  f: number; // Total cost (g + h)
+/**
+ * Binary min-heap keyed on f-score for O(log n) insert/extract.
+ * Replaces the naive array sort (O(n log n) per iteration).
+ */
+class MinHeap {
+  private heap: AStarNode[] = [];
+
+  get size(): number {
+    return this.heap.length;
+  }
+
+  push(node: AStarNode): void {
+    this.heap.push(node);
+    this.bubbleUp(this.heap.length - 1);
+  }
+
+  pop(): AStarNode | undefined {
+    if (this.heap.length === 0) return undefined;
+    const min = this.heap[0];
+    const last = this.heap.pop()!;
+    if (this.heap.length > 0) {
+      this.heap[0] = last;
+      this.sinkDown(0);
+    }
+    return min;
+  }
+
+  private bubbleUp(index: number): void {
+    while (index > 0) {
+      const parentIndex = Math.floor((index - 1) / 2);
+      if (this.heap[parentIndex].f <= this.heap[index].f) break;
+      [this.heap[parentIndex], this.heap[index]] = [
+        this.heap[index],
+        this.heap[parentIndex],
+      ];
+      index = parentIndex;
+    }
+  }
+
+  private sinkDown(index: number): void {
+    const length = this.heap.length;
+    while (true) {
+      let smallest = index;
+      const left = 2 * index + 1;
+      const right = 2 * index + 2;
+
+      if (left < length && this.heap[left].f < this.heap[smallest].f) {
+        smallest = left;
+      }
+      if (right < length && this.heap[right].f < this.heap[smallest].f) {
+        smallest = right;
+      }
+      if (smallest === index) break;
+
+      [this.heap[smallest], this.heap[index]] = [
+        this.heap[index],
+        this.heap[smallest],
+      ];
+      index = smallest;
+    }
+  }
 }
 
 /**
@@ -30,7 +87,7 @@ function manhattanDistance(
  * Uses a heuristic to guide search towards the goal.
  * Guarantees shortest path with admissible heuristic.
  *
- * Time Complexity: O(E) where E = edges (with good heuristic)
+ * Time Complexity: O(V log V) with binary heap
  * Space Complexity: O(V) for the priority queue
  *
  * @param maze - 2D grid representing the maze
@@ -43,19 +100,16 @@ export function astar(
   start: [number, number],
   end: [number, number]
 ): AlgorithmResult {
-  // Priority queue (simple array, sorted by f-score)
-  const openSet: Node[] = [
-    {
-      pos: start,
-      path: [start],
-      g: 0,
-      h: manhattanDistance(start, end),
-      f: manhattanDistance(start, end),
-    },
-  ];
+  const h = manhattanDistance(start, end);
+  const openSet = new MinHeap();
+  openSet.push({ pos: start, g: 0, f: h });
 
   const visited = new Set<string>([`${start[0]},${start[1]}`]);
   const visitedOrder: [number, number][] = [start];
+
+  // Parent map for O(V) path reconstruction instead of O(V²) path copies
+  const parentMap = new Map<string, [number, number] | null>();
+  parentMap.set(`${start[0]},${start[1]}`, null);
 
   const directions: [number, number][] = [
     [1, 0],
@@ -64,17 +118,15 @@ export function astar(
     [0, -1],
   ];
 
-  while (openSet.length > 0) {
-    // Get node with lowest f-score
-    openSet.sort((a, b) => a.f - b.f);
-    const current = openSet.shift()!;
+  while (openSet.size > 0) {
+    const current = openSet.pop()!;
     const [x, y] = current.pos;
 
     // Found the target!
     if (x === end[0] && y === end[1]) {
       return {
         visited: visitedOrder,
-        path: current.path,
+        path: reconstructPath(parentMap, end),
       };
     }
 
@@ -94,18 +146,11 @@ export function astar(
       ) {
         visited.add(key);
         visitedOrder.push([newX, newY]);
+        parentMap.set(key, [x, y]);
 
-        const g = current.g + 1; // Each step costs 1
-        const h = manhattanDistance([newX, newY], end);
-        const f = g + h;
-
-        openSet.push({
-          pos: [newX, newY],
-          path: [...current.path, [newX, newY]],
-          g,
-          h,
-          f,
-        });
+        const g = current.g + 1;
+        const newH = manhattanDistance([newX, newY], end);
+        openSet.push({ pos: [newX, newY], g, f: g + newH });
       }
     }
   }

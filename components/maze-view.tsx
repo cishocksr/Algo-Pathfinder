@@ -24,6 +24,7 @@ export default function MazeView() {
     generateMaze,
     resetMaze,
     traverse,
+    toggleWall,
     showModal,
     setShowModal,
     isRunning,
@@ -207,7 +208,12 @@ export default function MazeView() {
       {/* Maze Grid */}
       <Card className="w-full max-w-fit">
         <CardContent className="p-0">
-          <MazeGrid maze={maze} columns={gridSize.cols} />
+          <MazeGrid
+            maze={maze}
+            columns={gridSize.cols}
+            onCellClick={toggleWall}
+            isInteractive={!isRunning}
+          />
         </CardContent>
       </Card>
 

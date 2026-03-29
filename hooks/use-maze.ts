@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { MazeGridType } from "@/lib/types";
+import type { MazeGridType, AlgorithmResult } from "@/lib/types";
 import { bfs } from "@/lib/algorithms/bfs";
 import { dfs } from "@/lib/algorithms/dfs";
 import { astar } from "@/lib/algorithms/astar";
@@ -12,11 +12,6 @@ const WALL_PROBABILITY = 0.2;
 const DEFAULT_ANIMATION_SPEED = 50; // ms per step
 
 type AlgorithmType = "bfs" | "dfs" | "astar";
-
-interface AlgorithmResult {
-  visited: [number, number][];
-  path: [number, number][];
-}
 
 interface AlgorithmStats {
   nodesVisited: number;
@@ -160,12 +155,40 @@ export function useMaze(width = 20, height = 20) {
     }
   }, [isPaused, isRunning, animateStep]);
 
+  // Toggle a cell between wall and path (for interactive wall drawing)
+  const toggleWall = useCallback(
+    (x: number, y: number) => {
+      if (isRunning) return;
+      setMaze((prev) =>
+        prev.map((row, rowIdx) =>
+          row.map((cell, colIdx) => {
+            if (rowIdx === y && colIdx === x) {
+              if (cell === "wall") return "path";
+              if (cell === "path" || cell === "visited" || cell === "final-path")
+                return "wall";
+            }
+            return cell;
+          })
+        )
+      );
+    },
+    [isRunning]
+  );
+
   // Run algorithm
   const traverse = useCallback(
     (method: AlgorithmType) => {
       if (isRunning) return; // Prevent running multiple algorithms
 
-      resetMaze();
+      // Fix: compute a clean maze synchronously so the algorithm doesn't
+      // run on stale state with leftover "visited" / "final-path" cells.
+      const cleanMaze: MazeGridType = maze.map((row) =>
+        row.map((cell) =>
+          cell === "visited" || cell === "final-path" ? "path" : cell
+        )
+      );
+      setMaze(cleanMaze);
+      resetAnimation();
 
       // Select algorithm based on method
       const algorithm = method === "bfs" ? bfs : method === "dfs" ? dfs : astar;
@@ -175,13 +198,8 @@ export function useMaze(width = 20, height = 20) {
 
       startTimeRef.current = performance.now();
 
-      // Run algorithm
-      const result = algorithm(maze, start, end) as AlgorithmResult;
-
-      if (result.visited.length === 0) {
-        alert("No path found!");
-        return;
-      }
+      // Run algorithm on the clean maze (not the potentially stale state)
+      const result: AlgorithmResult = algorithm(cleanMaze, start, end);
 
       visitedNodesRef.current = result.visited;
       finalPathRef.current = result.path;
@@ -194,7 +212,7 @@ export function useMaze(width = 20, height = 20) {
       // Start animation
       animateStep();
     },
-    [maze, width, height, isRunning, resetMaze, animateStep]
+    [maze, width, height, isRunning, resetAnimation, animateStep]
   );
 
   // Toggle pause
@@ -224,6 +242,7 @@ export function useMaze(width = 20, height = 20) {
     generateMaze,
     resetMaze,
     traverse,
+    toggleWall,
     showModal,
     setShowModal,
     isRunning,

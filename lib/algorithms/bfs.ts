@@ -1,9 +1,5 @@
-import type { MazeGridType } from "../types";
-
-interface AlgorithmResult {
-  visited: [number, number][]; // Order nodes were explored
-  path: [number, number][]; // Shortest path from start to end
-}
+import type { MazeGridType, AlgorithmResult } from "../types";
+import { reconstructPath } from "./reconstruct-path";
 
 /**
  * Breadth-First Search (BFS) Algorithm
@@ -24,14 +20,13 @@ export function bfs(
   start: [number, number],
   end: [number, number]
 ): AlgorithmResult {
-  // Queue stores: current position and path to reach it
-  const queue: Array<{
-    pos: [number, number];
-    path: [number, number][];
-  }> = [{ pos: start, path: [start] }];
-
+  const queue: [number, number][] = [start];
   const visited = new Set<string>([`${start[0]},${start[1]}`]);
   const visitedOrder: [number, number][] = [start];
+
+  // Parent map for O(V) path reconstruction instead of O(V²) path copies
+  const parentMap = new Map<string, [number, number] | null>();
+  parentMap.set(`${start[0]},${start[1]}`, null);
 
   // Direction vectors: right, down, left, up
   const directions: [number, number][] = [
@@ -42,14 +37,13 @@ export function bfs(
   ];
 
   while (queue.length > 0) {
-    const { pos, path } = queue.shift()!;
-    const [x, y] = pos;
+    const [x, y] = queue.shift()!;
 
     // Found the target!
     if (x === end[0] && y === end[1]) {
       return {
         visited: visitedOrder,
-        path: path,
+        path: reconstructPath(parentMap, end),
       };
     }
 
@@ -70,10 +64,8 @@ export function bfs(
       ) {
         visited.add(key);
         visitedOrder.push([newX, newY]);
-        queue.push({
-          pos: [newX, newY],
-          path: [...path, [newX, newY]],
-        });
+        parentMap.set(key, [x, y]);
+        queue.push([newX, newY]);
       }
     }
   }

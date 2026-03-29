@@ -98,8 +98,7 @@ export function StatsDisplay({ stats, algorithm }: StatsDisplayProps) {
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Lower is better - indicates how many nodes were explored vs. the
-            final path length
+            Higher is better — ratio of path length to total nodes explored
           </p>
         </div>
       )}
