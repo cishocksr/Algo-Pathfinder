@@ -164,7 +164,11 @@ export function useMaze(width = 20, height = 20) {
           row.map((cell, colIdx) => {
             if (rowIdx === y && colIdx === x) {
               if (cell === "wall") return "path";
-              if (cell === "path" || cell === "visited" || cell === "final-path")
+              if (
+                cell === "path" ||
+                cell === "visited" ||
+                cell === "final-path"
+              )
                 return "wall";
             }
             return cell;

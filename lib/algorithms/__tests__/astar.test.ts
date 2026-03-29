@@ -91,14 +91,7 @@ describe("astar", () => {
 
   it("solves a deterministic sparse wall field (no randomness)", () => {
     const size = 12;
-    const walls = new Set<string>([
-      "2,2",
-      "3,3",
-      "5,4",
-      "4,6",
-      "7,7",
-      "8,5",
-    ]);
+    const walls = new Set<string>(["2,2", "3,3", "5,4", "4,6", "7,7", "8,5"]);
     const maze: MazeGridType = Array.from({ length: size }, (_, y) =>
       Array.from({ length: size }, (_, x) => {
         if (x === 0 && y === 0) return "start";

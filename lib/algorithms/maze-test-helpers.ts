@@ -8,10 +8,7 @@ const ORTHO: [number, number][] = [
 ];
 
 /** Manhattan distance between two grid points. */
-export function manhattan(
-  a: [number, number],
-  b: [number, number]
-): number {
+export function manhattan(a: [number, number], b: [number, number]): number {
   return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
 }
 
@@ -89,9 +86,7 @@ export function expectValidPathInMaze(
 
   for (const [x, y] of path) {
     const cell = maze[y][x];
-    expect(
-      cell === "start" || cell === "path" || cell === "end"
-    ).toBe(true);
+    expect(cell === "start" || cell === "path" || cell === "end").toBe(true);
   }
 }
 
